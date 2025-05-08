@@ -8,13 +8,11 @@
 
 ## How to use
 ```php
-$cache = new \Wilkques\Cache\Cache;
-
 // create cache
-$cache->put('<key>', '<value>', '<expire secord>');
+\Wilkques\Cache\Cache::put('<key>', '<value>', '<expire secord>');
 
 // get cache
-$resolve = $cache->get('<key>');
+$resolve = \Wilkques\Cache\Cache::get('<key>');
 
 var_dump(
     $resolve

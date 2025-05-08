@@ -3,14 +3,14 @@
 namespace Wilkques\Cache;
 
 use Wilkques\Helpers\Arrays;
-use Wilkques\FileSystem\FileSystem;
+use Wilkques\Filesystem\Filesystem;
 
 class FileStore
 {
     /**
-     * @var FileSystem
+     * @var Filesystem
      */
-    protected $fileSystem;
+    protected $filesystem;
 
     /**
      * Octal representation of the cache file permissions.
@@ -28,13 +28,13 @@ class FileStore
      * @param string $fileName
      * @param string $directory
      */
-    public function __construct(string $directory = './storage/cache', $filePermission = null)
+    public function __construct($directory = './storage/cache', $filePermission = null)
     {
         $this->setDirectory($directory);
 
         $this->setFilePermission($filePermission);
 
-        $this->fileSystem = new FileSystem;
+        $this->filesystem = new Filesystem;
     }
 
     /**
@@ -42,7 +42,7 @@ class FileStore
      * 
      * @return static
      */
-    public function setDirectory(string $directory = './storage/cache')
+    public function setDirectory($directory = './storage/cache')
     {
         $this->directory = $directory;
 
@@ -101,7 +101,7 @@ class FileStore
     {
         $this->ensureCacheDirectoryExists($path = $this->path($key));
 
-        $result = $this->fileSystem->put($path, $this->expiration($secord) . serialize($value), true);
+        $result = $this->filesystem->put($path, $this->expiration($secord) . serialize($value), true);
 
         return $result !== false && $result > 0;
     }
@@ -116,8 +116,8 @@ class FileStore
     {
         $directory = dirname($path);
 
-        if (! $this->fileSystem->exists($directory)) {
-            $this->fileSystem->makeDirectory($directory, 0777, true, true);
+        if (! $this->filesystem->exists($directory)) {
+            $this->filesystem->makeDirectory($directory, 0777, true, true);
 
             // We're creating two levels of directories (e.g. 7e/24), so we check them both...
             $this->ensurePermissionsAreCorrect($directory);
@@ -134,11 +134,11 @@ class FileStore
     protected function ensurePermissionsAreCorrect($path)
     {
         if (is_null($this->getFilePermission()) ||
-            intval($this->fileSystem->chmod($path), 8) == $this->getFilePermission()) {
+            intval($this->filesystem->chmod($path), 8) == $this->getFilePermission()) {
             return;
         }
 
-        $this->fileSystem->chmod($path, $this->getFilePermission());
+        $this->filesystem->chmod($path, $this->getFilePermission());
     }
 
     /**
@@ -159,8 +159,8 @@ class FileStore
      */
     public function forgot($key)
     {
-        if ($this->fileSystem->exists($file = $this->path($key))) {
-            return $this->fileSystem->delete($file);
+        if ($this->filesystem->exists($file = $this->path($key))) {
+            return $this->filesystem->delete($file);
         }
 
         return false;
@@ -181,7 +181,7 @@ class FileStore
         // the expiration UNIX timestamps from the start of the file's contents.
         try {
             $expire = substr(
-                $contents = $this->fileSystem->get($path, true),
+                $contents = $this->filesystem->get($path, true),
                 0,
                 10
             );
@@ -248,7 +248,7 @@ class FileStore
         // the expiration UNIX timestamps from the start of the file's contents.
         try {
             $expire = substr(
-                $this->fileSystem->get($path, true),
+                $this->filesystem->get($path, true),
                 0,
                 10
             );
