@@ -1,0 +1,16 @@
+{
+    "name": "wilkques/cache",
+    "description": "PHP Cache",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": ">=5.4",
+        "wilkques/php-helper": "^5.13.0",
+        "wilkques/filesystem": "^1.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Wilkques\\Cache\\": "src/"
+        }
+    }
+}
