@@ -1,4 +1,4 @@
-# File System
+# PHP Cache
 
 [![Latest Stable Version](https://poser.pugx.org/wilkques/cache/v/stable)](https://packagist.org/packages/wilkques/cache)
 [![License](https://poser.pugx.org/wilkques/cache/license)](https://packagist.org/packages/wilkques/cache)
