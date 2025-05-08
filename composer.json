@@ -12,5 +12,13 @@
         "psr-4": {
             "Wilkques\\Cache\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Wilkques\\Cache\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*"
     }
 }
