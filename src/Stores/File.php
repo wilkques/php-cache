@@ -1,11 +1,11 @@
 <?php
 
-namespace Wilkques\Cache;
+namespace Wilkques\Cache\Stores;
 
 use Wilkques\Helpers\Arrays;
 use Wilkques\Filesystem\Filesystem;
 
-class FileStore
+class File
 {
     /**
      * @var Filesystem

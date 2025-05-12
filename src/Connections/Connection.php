@@ -45,7 +45,7 @@ class Connection
             case 'file':
             default:
                 if ($this->hasnotStore()) {
-                    Arrays::set($this->store, $driver, $this->container->make('\Wilkques\Cache\FileStore'));
+                    Arrays::set($this->store, $driver, $this->container->make('\Wilkques\Cache\Stores\File'));
                 }
                 break;
         }

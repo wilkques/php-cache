@@ -4,7 +4,7 @@ namespace Wilkques\Config\Tests\Feature;
 
 use PHPUnit\Framework\TestCase;
 use Wilkques\Cache\Cache;
-use Wilkques\Cache\FileStore;
+use Wilkques\Cache\Stores\File;
 
 class CacheTest extends TestCase
 {
@@ -14,7 +14,7 @@ class CacheTest extends TestCase
     public function testDriverUseFile()
     {
         $this->assertTrue(
-            Cache::driver() instanceof FileStore
+            Cache::driver() instanceof File
         );
     }
 }
