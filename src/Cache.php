@@ -30,7 +30,7 @@ class Cache
     public function __call($method, $arguments)
     {
         /** @var \Wilkques\Cache\Connections\Connection */
-        $connection = (new \Wilkques\Container\Container)->make('\Wilkques\Cache\Connections\Connection');
+        $connection = $this->container->make('\Wilkques\Cache\Connections\Connection');
 
         if ($method == 'driver') {
             return call_user_func_array(array($connection, 'driver'), $arguments);
