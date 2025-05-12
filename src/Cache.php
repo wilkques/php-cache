@@ -24,7 +24,13 @@ class Cache
      */
     public static function make()
     {
-        return (new \Wilkques\Container\Container)->make('\Wilkques\Cache\Cache');
+        $container = new Container;
+
+        $container->singleton('\Wilkques\Cache\Cache', function () use ($container) {
+            return $container->make('\Wilkques\Cache\Cache');
+        });
+
+        return $container->get('\Wilkques\Cache\Cache');
     }
 
     public function __call($method, $arguments)
@@ -32,6 +38,7 @@ class Cache
         /** @var \Wilkques\Cache\Connections\Connection */
         $connection = $this->container->make('\Wilkques\Cache\Connections\Connection');
 
+        // choise driver
         if ($method == 'driver') {
             return call_user_func_array(array($connection, 'driver'), $arguments);
         }
