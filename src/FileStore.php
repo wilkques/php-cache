@@ -28,13 +28,13 @@ class FileStore
      * @param string $fileName
      * @param string $directory
      */
-    public function __construct($directory = './storage/cache', $filePermission = null)
+    public function __construct(Filesystem $filesystem, $directory = './storage/cache', $filePermission = null)
     {
         $this->setDirectory($directory);
 
         $this->setFilePermission($filePermission);
 
-        $this->filesystem = new Filesystem;
+        $this->filesystem = $filesystem;
     }
 
     /**

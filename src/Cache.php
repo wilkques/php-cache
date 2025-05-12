@@ -2,15 +2,15 @@
 
 namespace Wilkques\Cache;
 
+use Wilkques\Container\Container;
+use Wilkques\Helpers\Arrays;
+
 class Cache
 {
     /**
      * @var string
      */
     protected $driver = 'file';
-
-    /** @var static */
-    protected static $instance;
 
     /**
      * driver resolver
@@ -20,17 +20,21 @@ class Cache
     protected $store = array();
 
     /**
+     * @var Container
+     */
+    protected $container;
+
+    public function __construct(Container $container)
+    {
+        $this->container = $container;
+    }
+
+    /**
      * @return static
      */
     public static function make()
     {
-        if (static::$instance) {
-            return static::$instance;
-        }
-
-        static::$instance = new static;
-
-        return static::$instance;
+        return (new \Wilkques\Container\Container)->make('\Wilkques\Cache\Cache');
     }
 
     /**
@@ -38,31 +42,21 @@ class Cache
      * 
      * @return FileStore
      */
-    public static function driver($driver = 'file')
+    public function driver($driver = 'file')
     {
-        $instance = static::make();
-
         switch ($driver) {
             case 'file':
             default:
-                $resolver = new FileStore();
-
-                $instance->store[$driver] = $resolver;
+                Arrays::set($this->store, $driver, $this->container->make('\Wilkques\Cache\FileStore'));
                 break;
         }
 
-        return $resolver;
+        return Arrays::get($this->store, $driver);
     }
 
     public function __call($method, $arguments)
     {
-        if (empty($this->store)) {
-            $store = static::driver($this->driver);
-        
-            return call_user_func_array(array($store, $method), $arguments);
-        }
-
-        $store = $this->store[$this->driver];
+        $store = $this->driver($this->driver);
         
         return call_user_func_array(array($store, $method), $arguments);
     }
