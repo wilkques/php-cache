@@ -1,11 +1,11 @@
 <?php
 
-namespace Wilkques\Cache\Connections;
+namespace Wilkques\Cache\Drivers;
 
 use Wilkques\Container\Container;
 use Wilkques\Helpers\Arrays;
 
-class Connection
+class Driver
 {
     /**
      * @var Container

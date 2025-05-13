@@ -36,14 +36,14 @@ class Cache
     public function __call($method, $arguments)
     {
         /** @var \Wilkques\Cache\Connections\Connection */
-        $connection = $this->container->make('\Wilkques\Cache\Connections\Connection');
+        $driver = $this->container->make('\Wilkques\Cache\Drivers\Driver');
 
         // choise driver
         if ($method == 'driver') {
-            return call_user_func_array(array($connection, 'driver'), $arguments);
+            return call_user_func_array(array($driver, 'driver'), $arguments);
         }
 
-        $store = $connection->driver();
+        $store = $driver->driver();
 
         return call_user_func_array(array($store, $method), $arguments);
     }
