@@ -31,11 +31,11 @@ class Cache
     {
         $container = new Container;
 
-        $container->singleton('\Wilkques\Cache\Cache', function () use ($container) {
-            return $container->make('\Wilkques\Cache\Cache');
+        $container->singleton(__CLASS__, function (self $cache) {
+            return $cache;
         });
 
-        return $container->get('\Wilkques\Cache\Cache');
+        return $container->get(__CLASS__);
     }
 
     /**
@@ -47,7 +47,7 @@ class Cache
             return $this->driver;
         }
 
-        return $this->driver = $this->container->make('\Wilkques\Cache\Drivers\Driver');
+        return $this->driver = $this->container->make('\\Wilkques\\Cache\\Drivers\\Driver');
     }
 
     public function __call($method, $arguments)
