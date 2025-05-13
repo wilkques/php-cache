@@ -12,6 +12,11 @@ class Cache
     protected $container;
 
     /**
+     * @var \Wilkques\Cache\Drivers\Driver
+     */
+    protected $driver;
+
+    /**
      * @param Container $container
      */
     public function __construct(Container $container)
@@ -33,10 +38,21 @@ class Cache
         return $container->get('\Wilkques\Cache\Cache');
     }
 
+    /**
+     * @return \Wilkques\Cache\Drivers\Driver
+     */
+    public function newDriver()
+    {
+        if ($this->driver) {
+            return $this->driver;
+        }
+
+        return $this->driver = $this->container->make('\Wilkques\Cache\Drivers\Driver');
+    }
+
     public function __call($method, $arguments)
     {
-        /** @var \Wilkques\Cache\Connections\Connection */
-        $driver = $this->container->make('\Wilkques\Cache\Drivers\Driver');
+        $driver = $this->newDriver();
 
         // choise driver
         if ($method == 'driver') {

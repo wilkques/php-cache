@@ -43,14 +43,15 @@ class Driver
 
         switch ($driver) {
             case 'file':
-            default:
                 if ($this->hasnotStore()) {
                     Arrays::set($this->store, $driver, $this->container->make('\Wilkques\Cache\Stores\File'));
                 }
+
+                return $this->store();
                 break;
         }
 
-        return $this->store();
+        throw new \RuntimeException("Driver {$driver} does not exist");
     }
 
     /**
