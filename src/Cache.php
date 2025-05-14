@@ -29,11 +29,9 @@ class Cache
      */
     public static function make()
     {
-        $container = new Container;
+        $container = \Wilkques\Container\Container::getInstance();
 
-        $container->singleton(__CLASS__, function (self $cache) {
-            return $cache;
-        });
+        $container->singleton(__CLASS__, $container->make(__CLASS__, array($container)));
 
         return $container->get(__CLASS__);
     }
