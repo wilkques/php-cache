@@ -31,9 +31,7 @@ class Cache
     {
         $container = \Wilkques\Container\Container::getInstance();
 
-        $container->singleton(__CLASS__, $container->make(__CLASS__, array($container)));
-
-        return $container->get(__CLASS__);
+        return $container->make(__CLASS__);
     }
 
     /**
