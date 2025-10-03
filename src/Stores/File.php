@@ -18,7 +18,7 @@ class File
      * @var int|null
      */
     protected $filePermission;
-    
+
     /**
      * @var string
      */
@@ -133,8 +133,10 @@ class File
      */
     protected function ensurePermissionsAreCorrect($path)
     {
-        if (is_null($this->getFilePermission()) ||
-            intval($this->filesystem->chmod($path), 8) == $this->getFilePermission()) {
+        if (
+            is_null($this->getFilePermission()) ||
+            intval($this->filesystem->chmod($path), 8) == $this->getFilePermission()
+        ) {
             return;
         }
 
@@ -226,12 +228,13 @@ class File
 
     /**
      * @param string|int|null $key
+     * @param mixed|false $default
      * 
      * @return mixed|false
      */
-    public function get($key = null)
+    public function get($key = null, $default = false)
     {
-        return Arrays::get($this->getPayload($key), 'data');
+        return Arrays::get($this->getPayload($key), 'data', $default);
     }
 
     /**
@@ -294,8 +297,10 @@ class File
         if ($cache = $this->get($key)) {
             return $cache;
         }
-        
-        $this->put($key, $callback, $expire);
+
+        $value = $callback();
+
+        $this->put($key, $value, $expire);
 
         return $this->get($key);
     }
