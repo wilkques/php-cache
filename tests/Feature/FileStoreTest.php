@@ -42,7 +42,7 @@ class FileStoreTest extends TestCase
     {
         $data = Cache::remember('123', 5, '456');
 
-        $this->assertEquals($data, '456');
+        $this->assertEquals('456', $data);
 
         sleep(6);
 
