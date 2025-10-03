@@ -40,11 +40,13 @@ class FileStoreTest extends TestCase
 
     public function testRemember()
     {
-        $data = Cache::remember('123', 5, function() {
+        $data = Cache::remember('123', 5, function () {
             return '456';
         });
 
         $this->assertEquals('456', $data);
+
+        $this->assertEquals('456', Cache::get('123'));
 
         sleep(6);
 
