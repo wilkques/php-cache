@@ -52,4 +52,13 @@ class FileStoreTest extends TestCase
 
         $this->assertNull(Cache::get('123'));
     }
+
+    public function testClear()
+    {
+        Cache::put('123', '456');
+
+        Cache::clear();
+
+        $this->assertNull(Cache::get('123'));
+    }
 }

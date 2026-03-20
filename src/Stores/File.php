@@ -304,4 +304,12 @@ class File
 
         return $this->get($key);
     }
+
+    /**
+     * @return void
+     */
+    public function clear()
+    {
+        $this->filesystem->deleteDirectory($this->getDirectory());
+    }
 }
