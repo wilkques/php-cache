@@ -25,11 +25,27 @@ class Cache
     }
 
     /**
+     * Resolve (and share) the Cache instance.
+     *
+     * Bound as a singleton so repeated calls return the exact same
+     * instance instead of a fresh one each time — same pattern
+     * wilkques/console's Console::make() uses. Without this, every
+     * make()/cache() call built a brand new Cache -> Driver -> Store
+     * chain: harmless for the file store (its state lives on disk, not
+     * in the object), but it silently broke any in-memory driver, and
+     * contradicted this class's own documented "shared instance"
+     * behavior. Found and fixed while adding the array driver, which
+     * would otherwise have lost its data between every single call.
+     *
      * @return static
      */
     public static function make()
     {
         $container = \Wilkques\Container\Container::getInstance();
+
+        if (!$container->bound(__CLASS__)) {
+            $container->singleton(__CLASS__);
+        }
 
         return $container->make(__CLASS__);
     }
