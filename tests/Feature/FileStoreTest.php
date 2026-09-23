@@ -53,6 +53,27 @@ class FileStoreTest extends TestCase
         $this->assertNull(Cache::get('123'));
     }
 
+    public function testRememberWithFalsyValueDoesNotRecomputeEachCall()
+    {
+        $calls = 0;
+
+        $first = Cache::remember('falsy-key', 5, function () use (&$calls) {
+            $calls++;
+
+            return 0;
+        });
+
+        $second = Cache::remember('falsy-key', 5, function () use (&$calls) {
+            $calls++;
+
+            return 999;
+        });
+
+        $this->assertSame(0, $first);
+        $this->assertSame(0, $second);
+        $this->assertEquals(1, $calls);
+    }
+
     public function testClear()
     {
         Cache::put('123', '456');

@@ -294,15 +294,15 @@ class File
      */
     public function remember($key, $expire, $callback)
     {
-        if ($cache = $this->get($key)) {
-            return $cache;
+        if ($this->has($key)) {
+            return $this->get($key);
         }
 
         $value = $callback();
 
         $this->put($key, $value, $expire);
 
-        return $this->get($key);
+        return $value;
     }
 
     /**
