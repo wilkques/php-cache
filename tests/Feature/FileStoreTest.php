@@ -83,6 +83,24 @@ class FileStoreTest extends TestCase
         $this->assertEquals('permanent', Cache::get('forever-key'));
     }
 
+    public function testHugeTtlDoesNotCorruptTheStoredExpirationTimestamp()
+    {
+        // Before the fix, expiration() had no overflow cap and put() never
+        // padded the timestamp to a fixed width, so a TTL large enough to
+        // push time()+$seconds past 9999999999 (10 digits) produced an
+        // 11+ digit timestamp with nothing separating it from the
+        // serialized payload that follows it. getPayload()'s fixed
+        // substr($contents, 0, 10)/substr($contents, 10) split would then
+        // read the wrong slice as the payload, unserialize() would fail,
+        // and get() would silently return null instead of the cached
+        // value — this asserts that no longer happens.
+        $this->assertTrue(
+            Cache::put('huge-ttl-key', 'still-intact', 99999999999)
+        );
+
+        $this->assertEquals('still-intact', Cache::get('huge-ttl-key'));
+    }
+
     public function testClear()
     {
         Cache::put('123', '456');
