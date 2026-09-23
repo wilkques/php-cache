@@ -6,7 +6,7 @@
     "require": {
         "php": ">=5.3",
         "wilkques/container": "*",
-        "wilkques/php-helper": "^5.13.0",
+        "wilkques/php-helper": "^6.1.0",
         "wilkques/filesystem": "^1.0.0"
     },
     "autoload": {
