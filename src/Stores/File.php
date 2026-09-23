@@ -5,6 +5,8 @@ namespace Wilkques\Cache\Stores;
 use Wilkques\Helpers\Arrays;
 use Wilkques\Helpers\Strings;
 use Wilkques\Filesystem\Filesystem;
+use Wilkques\Cache\Concerns\InteractsWithTime;
+use Wilkques\Cache\Lock;
 
 class File
 {
@@ -94,12 +96,14 @@ class File
     /**
      * @param string|int $key
      * @param mixed $value
-     * @param int|null $secord
-     * 
+     * @param int|\DateInterval|\DateTime|null $secord
+     *
      * @return bool
      */
     public function put($key, $value, $secord = null)
     {
+        $secord = InteractsWithTime::resolveSeconds($secord);
+
         $this->ensureCacheDirectoryExists($path = $this->path($key));
 
         $expiration = Strings::padLeft((string) $this->expiration($secord), 10, '0');
@@ -113,16 +117,15 @@ class File
      * Store an item in the cache if the key doesn't already exist (and isn't
      * expired).
      *
-     * Note: unlike Laravel's FileStore::add(), this is a plain check-then-set
-     * — there's no file locking backing it (this package has no equivalent
-     * of LockableFile), so it isn't race-condition-safe against a concurrent
-     * writer between the has() check and the put() call. Fine for the
-     * single-process use this package targets; don't rely on it for
-     * cross-process mutual exclusion.
+     * Note: unlike Laravel's FileStore::add(), this itself is a plain
+     * check-then-set — it isn't race-condition-safe against a concurrent
+     * writer between the has() check and the put() call. If you need real
+     * cross-process mutual exclusion, wrap the whole operation in lock()
+     * instead: `$this->lock('key')->get(function () use (...) { ... });`.
      *
      * @param string|int $key
      * @param mixed $value
-     * @param int|null $secord
+     * @param int|\DateInterval|\DateTime|null $secord
      *
      * @return bool
      */
@@ -395,9 +398,9 @@ class File
 
     /**
      * @param string $key
-     * @param int $expire
+     * @param int|\DateInterval|\DateTime|null $expire
      * @param callback $callback
-     * 
+     *
      * @return bool
      */
     public function remember($key, $expire, $callback)
@@ -419,5 +422,42 @@ class File
     public function clear()
     {
         $this->filesystem->deleteDirectory($this->getDirectory());
+    }
+
+    /**
+     * Get a lock instance for coordinating access to $name across
+     * processes/requests.
+     *
+     * @param string $name
+     * @param int $seconds How long the lock is considered held for; 0 means
+     *                     no expiry (released only via release()/
+     *                     forceRelease()).
+     * @param string|null $owner
+     *
+     * @return Lock
+     */
+    public function lock($name, $seconds = 0, $owner = null)
+    {
+        $lockDirectory = $this->getDirectory() . '/locks';
+
+        if (!$this->filesystem->exists($lockDirectory)) {
+            $this->filesystem->makeDirectory($lockDirectory, 0777, true, true);
+        }
+
+        return new Lock($lockDirectory . '/' . sha1($name), $name, $seconds, $owner);
+    }
+
+    /**
+     * Restore a lock instance for $name under a previously-generated owner
+     * token, so a different call site/process can release the same lock.
+     *
+     * @param string $name
+     * @param string $owner
+     *
+     * @return Lock
+     */
+    public function restoreLock($name, $owner)
+    {
+        return $this->lock($name, 0, $owner);
     }
 }

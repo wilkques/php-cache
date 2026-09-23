@@ -48,7 +48,12 @@ class Driver
                 }
 
                 return $this->store();
-                break;
+            case 'array':
+                if ($this->hasnotStore()) {
+                    Arrays::set($this->store, $driver, $this->container->make('\Wilkques\Cache\Stores\ArrayStore'));
+                }
+
+                return $this->store();
         }
 
         throw new \RuntimeException("Driver {$driver} does not exist");
