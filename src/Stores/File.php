@@ -3,6 +3,7 @@
 namespace Wilkques\Cache\Stores;
 
 use Wilkques\Helpers\Arrays;
+use Wilkques\Helpers\Strings;
 use Wilkques\Filesystem\Filesystem;
 
 class File
@@ -101,7 +102,9 @@ class File
     {
         $this->ensureCacheDirectoryExists($path = $this->path($key));
 
-        $result = $this->filesystem->put($path, $this->expiration($secord) . serialize($value), true);
+        $expiration = Strings::padLeft((string) $this->expiration($secord), 10, '0');
+
+        $result = $this->filesystem->put($path, $expiration . serialize($value), true);
 
         return $result !== false && $result > 0;
     }
@@ -273,16 +276,40 @@ class File
 
     /**
      * @param int $secords
-     * 
+     *
      * @return int
      */
     public function expiration($secords = null)
     {
+        // A literal 0 (as opposed to omitted/null) means "forever" — this is
+        // how forever() below requests it. The stored expiration timestamp is
+        // always padded/read as a fixed 10-character field (see put() /
+        // getPayload()), so it's capped at the largest 10-digit value instead
+        // of being allowed to grow past it and corrupt that fixed-width split.
+        if ($secords === 0) {
+            return 9999999999;
+        }
+
         if (!$secords) {
             $secords = 3600;
         }
 
-        return time() + $secords;
+        $time = time() + $secords;
+
+        return $time > 9999999999 ? 9999999999 : $time;
+    }
+
+    /**
+     * Store an item in the cache indefinitely.
+     *
+     * @param string|int $key
+     * @param mixed $value
+     *
+     * @return bool
+     */
+    public function forever($key, $value)
+    {
+        return $this->put($key, $value, 0);
     }
 
     /**

@@ -74,6 +74,15 @@ class FileStoreTest extends TestCase
         $this->assertEquals(1, $calls);
     }
 
+    public function testForever()
+    {
+        $this->assertTrue(
+            Cache::forever('forever-key', 'permanent')
+        );
+
+        $this->assertEquals('permanent', Cache::get('forever-key'));
+    }
+
     public function testClear()
     {
         Cache::put('123', '456');
