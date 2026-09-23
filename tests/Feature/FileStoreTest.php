@@ -101,6 +101,38 @@ class FileStoreTest extends TestCase
         $this->assertEquals('still-intact', Cache::get('huge-ttl-key'));
     }
 
+    public function testIncrementAndDecrement()
+    {
+        Cache::put('counter', 5, 60);
+
+        $this->assertEquals(6, Cache::increment('counter'));
+        $this->assertEquals(6, Cache::get('counter'));
+
+        $this->assertEquals(4, Cache::decrement('counter', 2));
+        $this->assertEquals(4, Cache::get('counter'));
+    }
+
+    public function testIncrementOnMissingKeyStartsFromZero()
+    {
+        $this->assertEquals(1, Cache::increment('missing-counter'));
+        $this->assertEquals(1, Cache::get('missing-counter'));
+    }
+
+    public function testAddOnlySetsWhenKeyIsAbsentOrExpired()
+    {
+        $this->assertTrue(Cache::add('add-key', 'first', 60));
+        $this->assertFalse(Cache::add('add-key', 'second', 60));
+        $this->assertEquals('first', Cache::get('add-key'));
+    }
+
+    public function testPullReturnsTheValueAndRemovesTheKey()
+    {
+        Cache::put('pull-key', 'value', 60);
+
+        $this->assertEquals('value', Cache::pull('pull-key'));
+        $this->assertNull(Cache::get('pull-key'));
+    }
+
     public function testClear()
     {
         Cache::put('123', '456');

@@ -110,6 +110,32 @@ class File
     }
 
     /**
+     * Store an item in the cache if the key doesn't already exist (and isn't
+     * expired).
+     *
+     * Note: unlike Laravel's FileStore::add(), this is a plain check-then-set
+     * — there's no file locking backing it (this package has no equivalent
+     * of LockableFile), so it isn't race-condition-safe against a concurrent
+     * writer between the has() check and the put() call. Fine for the
+     * single-process use this package targets; don't rely on it for
+     * cross-process mutual exclusion.
+     *
+     * @param string|int $key
+     * @param mixed $value
+     * @param int|null $secord
+     *
+     * @return bool
+     */
+    public function add($key, $value, $secord = null)
+    {
+        if ($this->has($key)) {
+            return false;
+        }
+
+        return $this->put($key, $value, $secord);
+    }
+
+    /**
      * Create the file cache directory if necessary.
      *
      * @param  string  $path
@@ -241,8 +267,25 @@ class File
     }
 
     /**
+     * Retrieve an item from the cache and delete it.
+     *
+     * @param string|int|null $key
+     * @param mixed|false $default
+     *
+     * @return mixed|false
+     */
+    public function pull($key = null, $default = false)
+    {
+        $value = $this->get($key, $default);
+
+        $this->forgot($key);
+
+        return $value;
+    }
+
+    /**
      * @param string $key
-     * 
+     *
      * @return bool
      */
     public function has($key)
@@ -310,6 +353,44 @@ class File
     public function forever($key, $value)
     {
         return $this->put($key, $value, 0);
+    }
+
+    /**
+     * Increment the value of an item in the cache, preserving its remaining
+     * TTL (a missing/expired key is treated as 0 and cached forever
+     * afterwards — same as Laravel's FileStore::increment()).
+     *
+     * @param string|int $key
+     * @param int $value
+     *
+     * @return int
+     */
+    public function increment($key, $value = 1)
+    {
+        $raw = $this->getPayload($key);
+
+        $newValue = ((int) $raw['data']) + $value;
+
+        // $raw['time'] is always present (even for a miss, via
+        // emptyPayload()) but null in that case — Arrays::get()'s $default
+        // only kicks in for an absent key, not a present null value, so the
+        // null has to be handled explicitly here instead of via its 3rd arg.
+        $this->put($key, $newValue, is_null($raw['time']) ? 0 : $raw['time']);
+
+        return $newValue;
+    }
+
+    /**
+     * Decrement the value of an item in the cache.
+     *
+     * @param string|int $key
+     * @param int $value
+     *
+     * @return int
+     */
+    public function decrement($key, $value = 1)
+    {
+        return $this->increment($key, $value * -1);
     }
 
     /**

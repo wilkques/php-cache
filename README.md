@@ -39,6 +39,17 @@ Cache::forgot('key');
 
 // wipe the entire cache directory
 Cache::clear();
+
+// only store if the key doesn't already exist (or has expired)
+Cache::add('key', 'value', 3600);
+
+// get the value and remove the key in one call
+Cache::pull('key');
+
+// atomically-ish bump a numeric value, preserving its remaining TTL
+Cache::increment('visits');
+Cache::increment('visits', 5);
+Cache::decrement('visits');
 ```
 
 The `cache()` global helper is a shortcut for the same thing:
@@ -59,11 +70,16 @@ cache();                  // same as Cache::make() — the Cache instance itself
 | `has($key)` | Whether a non-expired value exists for `$key`. | `Cache::has('key'); // bool` |
 | `forgot($key)` | Remove a single key. (Named `forgot`, not `forget` — that's the actual method name.) | `Cache::forgot('key');` |
 | `remember($key, $expire, $callback)` | Return the cached value if present; otherwise call `$callback`, store its return value for `$expire` seconds, and return it. Correctly distinguishes "not cached" from "cached but falsy" — caching `0`/`false`/`''`/`null`/`[]` via `remember()` won't recompute on every call. | `Cache::remember('key', 3600, function () { return compute(); });` |
+| `add($key, $value, $secord = null)` | Store a value only if the key doesn't already exist (or is expired). **Not** race-condition-safe (see note below). | `Cache::add('key', 'value', 3600); // bool` |
+| `pull($key, $default = false)` | Retrieve a value and remove it in the same call. | `Cache::pull('key');` |
+| `increment($key, $value = 1)` / `decrement($key, $value = 1)` | Add/subtract from a numeric value, preserving its remaining TTL. A missing/expired key is treated as `0`, and the result is then cached **forever** (matches Laravel's `FileStore::increment()`). | `Cache::increment('visits'); // int` |
 | `clear()` | Delete the entire cache directory. | `Cache::clear();` |
 | `driver($driver = 'file')` | Resolve (and cache) a store by name. Only `'file'` is currently implemented. | `Cache::driver('file');` |
 | `make()` *(static)* | Resolve the shared `Cache` instance via the container. | `Cache::make();` |
 
-> **Note on `get()`'s `$default`:** a miss or expired key still resolves internally to a `'data' => null` entry rather than an absent key, and the array lookup underneath treats a *present* `null` value as "the key exists" — so the `$default` you pass to `get()` is never actually returned; a miss always yields `null`. Don't rely on `$default` doing anything today.
+> **Note on `get()`'s `$default`:** a miss or expired key still resolves internally to a `'data' => null` entry rather than an absent key, and the array lookup underneath treats a *present* `null` value as "the key exists" — so the `$default` you pass to `get()` (and `pull()`, which is built on it) is never actually returned; a miss always yields `null`. Don't rely on `$default` doing anything today.
+
+> **Note on `add()`:** unlike Laravel's `FileStore::add()`, this is a plain check-then-set (`has()` followed by `put()`) — this package has no file-locking primitive backing it, so two processes calling `add()` for the same key at the same moment could both see "absent" and both write. Fine for single-process use; don't rely on it for cross-process mutual exclusion.
 
 ## Configuring the storage location
 
@@ -77,16 +93,13 @@ Cache::driver('file')
 
 ## Differences from Laravel's cache
 
-This package is intentionally much smaller in scope than `Illuminate\Cache`. Compared against Laravel's real `FileStore`/`Repository` source, notably missing:
+This package is intentionally much smaller in scope than `Illuminate\Cache`. Compared against Laravel's real `FileStore`/`Repository` source, still notably missing:
 
-- `increment()` / `decrement()`
-- `add()` (atomic put-if-absent, with file locking)
-- `pull()` (get a value and remove it in one call)
-- Any locking primitives (`lock()`, `restoreLock()`)
+- Any locking primitives (`lock()`, `restoreLock()`) — `add()` above is a best-effort, non-atomic approximation, not a replacement
 - `DateTimeInterface`/`DateInterval` TTLs — only raw seconds are accepted
 - Any driver besides the file store (no Redis/Memcached/array/etc.)
 
-If you need any of the above, reach for a full cache library instead — this package covers the common `put`/`get`/`has`/`remember`/`forever` cases and nothing more.
+If you need any of the above, reach for a full cache library instead.
 
 ## Testing
 

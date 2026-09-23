@@ -39,6 +39,17 @@ Cache::forgot('key');
 
 // 清空整個快取目錄
 Cache::clear();
+
+// key 不存在（或已過期）才儲存
+Cache::add('key', 'value', 3600);
+
+// 取值同時移除 key，一次呼叫完成
+Cache::pull('key');
+
+// 遞增／遞減數值，保留剩餘 TTL
+Cache::increment('visits');
+Cache::increment('visits', 5);
+Cache::decrement('visits');
 ```
 
 `cache()` 全域函式是同樣功能的捷徑：
@@ -59,11 +70,16 @@ cache();                  // 等同 Cache::make()，拿到 Cache 實例本身
 | `has($key)` | `$key` 是否有未過期的值。 | `Cache::has('key'); // bool` |
 | `forgot($key)` | 移除單一 key。（方法名稱就是 `forgot`，不是 `forget`——這是實際存在的方法名。） | `Cache::forgot('key');` |
 | `remember($key, $expire, $callback)` | 有快取就回傳；沒有就呼叫 `$callback`、把回傳值存 `$expire` 秒後回傳。能正確區分「沒快取」跟「快取值本身是 falsy」——用 `remember()` 快取 `0`/`false`/`''`/`null`/`[]` 不會每次都重算。 | `Cache::remember('key', 3600, function () { return compute(); });` |
+| `add($key, $value, $secord = null)` | key 不存在（或已過期）才儲存。**不是**防競態安全的（見下方註記）。 | `Cache::add('key', 'value', 3600); // bool` |
+| `pull($key, $default = false)` | 取值同時移除該 key，一次呼叫完成。 | `Cache::pull('key');` |
+| `increment($key, $value = 1)` / `decrement($key, $value = 1)` | 對數值做加／減，保留剩餘 TTL。key 不存在或已過期時視為 `0`，運算後的結果會**永久**儲存（跟 Laravel `FileStore::increment()` 行為一致）。 | `Cache::increment('visits'); // int` |
 | `clear()` | 刪除整個快取目錄。 | `Cache::clear();` |
 | `driver($driver = 'file')` | 依名稱解析（並快取）一個 store。目前只實作了 `'file'`。 | `Cache::driver('file');` |
 | `make()` *（靜態方法）* | 透過 container 解析出共用的 `Cache` 實例。 | `Cache::make();` |
 
-> **關於 `get()` 的 `$default` 參數**：key 不存在或已過期時，內部其實還是會產生一筆 `'data' => null` 的紀錄（不是真的「key 不存在」），而底層的陣列查找邏輯會把「存在但值是 `null`」視為「key 存在」——所以傳給 `get()` 的 `$default` **實際上永遠不會被回傳**，沒命中一律回傳 `null`。目前不要依賴 `$default` 會有任何作用。
+> **關於 `get()` 的 `$default` 參數**：key 不存在或已過期時，內部其實還是會產生一筆 `'data' => null` 的紀錄（不是真的「key 不存在」），而底層的陣列查找邏輯會把「存在但值是 `null`」視為「key 存在」——所以傳給 `get()`（以及建立在它之上的 `pull()`）的 `$default` **實際上永遠不會被回傳**，沒命中一律回傳 `null`。目前不要依賴 `$default` 會有任何作用。
+
+> **關於 `add()`**：跟 Laravel 的 `FileStore::add()` 不同，這裡只是單純的「先檢查再寫入」（`has()` 接著 `put()`）——這個套件沒有檔案鎖的機制，所以兩個行程同時對同一個 key 呼叫 `add()`，有可能都判斷成「不存在」然後都寫入。單一行程使用沒問題；不要拿它當跨行程互斥鎖用。
 
 ## 設定儲存位置
 
@@ -77,16 +93,13 @@ Cache::driver('file')
 
 ## 跟 Laravel 的差異
 
-這個套件的範疇刻意比 `Illuminate\Cache` 小很多。拿真正的 Laravel `FileStore`/`Repository` 原始碼比對過，明顯缺少：
+這個套件的範疇刻意比 `Illuminate\Cache` 小很多。拿真正的 Laravel `FileStore`/`Repository` 原始碼比對過，目前還缺少：
 
-- `increment()` / `decrement()`
-- `add()`（不存在才寫入，且有檔案鎖保護的原子操作）
-- `pull()`（取值同時移除，一次呼叫完成）
-- 任何鎖機制（`lock()`、`restoreLock()`）
+- 任何鎖機制（`lock()`、`restoreLock()`）——上面的 `add()` 只是盡力而為、非原子性的近似實作，不能當作替代品
 - `DateTimeInterface`/`DateInterval` 型別的 TTL——只吃原始秒數
 - file store 以外的任何 driver（沒有 Redis/Memcached/array 等）
 
-如果你需要上面任何一項，建議改用功能完整的快取套件——這個套件只涵蓋常見的 `put`/`get`/`has`/`remember`/`forever` 情境，僅此而已。
+如果你需要上面任何一項，建議改用功能完整的快取套件。
 
 ## 測試
 
