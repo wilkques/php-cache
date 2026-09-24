@@ -3,6 +3,8 @@
 [![Latest Stable Version](https://poser.pugx.org/wilkques/cache/v/stable)](https://packagist.org/packages/wilkques/cache)
 [![License](https://poser.pugx.org/wilkques/cache/license)](https://packagist.org/packages/wilkques/cache)
 
+[English](README.md) | 繁體中文
+
 一個輕量的檔案快取套件，`put()`/`get()`/`remember()` 這套 API 是模仿 Laravel 快取 facade 設計的（只挑了一小部分實作，不是完整移植——差異列在下方「跟 Laravel 的差異」）。
 
 ## 安裝

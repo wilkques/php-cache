@@ -3,6 +3,8 @@
 [![Latest Stable Version](https://poser.pugx.org/wilkques/cache/v/stable)](https://packagist.org/packages/wilkques/cache)
 [![License](https://poser.pugx.org/wilkques/cache/license)](https://packagist.org/packages/wilkques/cache)
 
+English | [繁體中文](README_ZH.md)
+
 A minimal file-based cache with a `put()`/`get()`/`remember()` API modeled after Laravel's cache facade (a small, hand-picked subset — not a full port; see "Differences from Laravel" below).
 
 ## Installation
